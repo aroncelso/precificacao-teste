@@ -16,13 +16,7 @@ export const AIAdvisor: React.FC<AIAdvisorProps> = ({ inputs, results }) => {
     setLoading(true);
     try {
       const result = await analyzePricingStrategy(inputs, results);
-      // The service returns { analysis: string, suggestions: string[] } because we parsed the JSON
-      // but the type signature in service return currently matches internal logic.
-      // Let's adjust based on the actual service return
-      setAnalysis({
-        text: (result as any).analysis || result.text,
-        suggestions: (result as any).suggestions || result.suggestions
-      });
+      setAnalysis(result);
     } catch (e) {
       console.error(e);
     } finally {

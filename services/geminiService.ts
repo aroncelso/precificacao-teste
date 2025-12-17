@@ -1,16 +1,14 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { PricingInputs, PricingResults } from "../types";
 
-const apiKey = process.env.API_KEY || '';
-
 // Initialize client securely (assuming key is present in env)
-const ai = new GoogleGenAI({ apiKey });
+const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 export const analyzePricingStrategy = async (
   inputs: PricingInputs,
   results: PricingResults
 ): Promise<{ text: string; suggestions: string[] }> => {
-  if (!apiKey) {
+  if (!process.env.API_KEY) {
     return {
       text: "Chave de API não configurada. Adicione sua API Key para receber análises.",
       suggestions: []
@@ -72,7 +70,11 @@ export const analyzePricingStrategy = async (
     });
 
     if (response.text) {
-      return JSON.parse(response.text);
+      const data = JSON.parse(response.text);
+      return {
+        text: data.analysis,
+        suggestions: data.suggestions
+      };
     }
     throw new Error("Resposta vazia da IA");
 

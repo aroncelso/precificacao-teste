@@ -1,8 +1,9 @@
 import React, { useState, useMemo } from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
-import { InputCard } from './components/InputCard';
-import { ResultCard } from './components/ResultCard';
-import { PricingInputs, PricingResults } from './types';
+import { InputCard } from '@/components/InputCard';
+import { ResultCard } from '@/components/ResultCard';
+import { AIAdvisor } from '@/components/AIAdvisor';
+import { PricingInputs, PricingResults } from '@/types';
 
 // Initial State
 const initialInputs: PricingInputs = {
@@ -225,6 +226,12 @@ function App() {
               </div>
             </div>
           )}
+          
+          {/* AI Advisor */}
+          {results.isValid && (
+             <AIAdvisor inputs={inputs} results={results} />
+          )}
+
         </div>
       </main>
     </div>
