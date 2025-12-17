@@ -110,24 +110,36 @@ const App = () => {
   const [dados, setDados] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Correção da sintaxe do useEffect e tratamento de erro
+  // Efeito corrigido com tratamento de erro e dados de fallback
   useEffect(() => {
     setLoading(true);
     fetch("https://script.google.com/macros/s/AKfycby5L01fyZ9Lqt7lZ0ZyKvCIkVnXBxEKxzZ-l22GCFJ9Yb76i9O-DhiHOg9kfI8dxLVTVQ/exec")
-      .then(res => res.json())
+      .then(res => {
+        if (!res.ok) throw new Error(`HTTP Error: ${res.status}`);
+        return res.json();
+      })
       .then(data => {
         console.log("Dados recebidos:", data);
-        // Garantir que data seja um array ou tratar conforme estrutura
         setDados(Array.isArray(data) ? data : []);
-        setLoading(false);
       })
       .catch(err => {
-        console.error("Erro no fetch:", err);
+        console.warn("API indisponível ou erro de conexão. Carregando dados de demonstração.", err);
+        // Fallback: Dados de exemplo para que a interface não fique vazia
+        setDados([
+          { "ID": "DEMO-001", "Produto": "Notebook Dell Inspiron", "Valor": 3500.00, "Status": "Concluído", "Data": "2024-12-01" },
+          { "ID": "DEMO-002", "Produto": "Monitor LG Ultrawide", "Valor": 1200.00, "Status": "Pendente", "Data": "2024-12-02" },
+          { "ID": "DEMO-003", "Produto": "Teclado Mecânico RGB", "Valor": 450.00, "Status": "Concluído", "Data": "2024-12-02" },
+          { "ID": "DEMO-004", "Produto": "Mouse Logitech G Pro", "Valor": 600.00, "Status": "Cancelado", "Data": "2024-12-03" },
+          { "ID": "DEMO-005", "Produto": "Headset HyperX", "Valor": 350.00, "Status": "Concluído", "Data": "2024-12-04" },
+          { "ID": "DEMO-006", "Produto": "Cadeira Gamer", "Valor": 1800.00, "Status": "Concluído", "Data": "2024-12-05" }
+        ]);
+      })
+      .finally(() => {
         setLoading(false);
       });
-  }, []); // Array de dependências vazio para rodar apenas uma vez
+  }, []);
 
-  // Dados Mockados para o gráfico caso a API esteja vazia ou carregando (para visualização)
+  // Dados Mockados para o gráfico
   const chartData = [
     { name: 'Loja A', vendas: 4000, lucro: 2400 },
     { name: 'Loja B', vendas: 3000, lucro: 1398 },
@@ -270,14 +282,14 @@ const App = () => {
           {/* List Section (Using data from fetch) */}
           <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
              <div className="p-6 border-b border-slate-200">
-               <h3 className="text-lg font-bold text-slate-800">Dados Brutos (Google Sheets)</h3>
+               <h3 className="text-lg font-bold text-slate-800">Dados Recentes (Google Sheets / Demo)</h3>
              </div>
              <div className="overflow-x-auto">
                 <table className="w-full text-sm text-left text-slate-600">
                   <thead className="text-xs text-slate-700 uppercase bg-slate-50">
                     <tr>
                       <th className="px-6 py-3">ID</th>
-                      <th className="px-6 py-3">Dados (JSON)</th>
+                      <th className="px-6 py-3">Detalhes (JSON)</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -287,7 +299,7 @@ const App = () => {
                       dados.slice(0, 5).map((row: any, idx) => (
                         <tr key={idx} className="bg-white border-b hover:bg-slate-50">
                           <td className="px-6 py-4 font-medium text-slate-900">#{idx + 1}</td>
-                          <td className="px-6 py-4 font-mono text-xs">{JSON.stringify(row).substring(0, 100)}...</td>
+                          <td className="px-6 py-4 font-mono text-xs">{JSON.stringify(row).substring(0, 120)}...</td>
                         </tr>
                       ))
                     )}
