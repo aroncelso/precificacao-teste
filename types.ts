@@ -19,8 +19,3 @@ export interface PricingResults {
     fill: string;
   }[];
 }
-
-export interface AIAnalysis {
-  analysis: string;
-  suggestions: string[];
-}

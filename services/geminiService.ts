@@ -18,29 +18,33 @@ export const analyzePricingStrategy = async (
   }
 
   const prompt = `
-    Atue como um consultor financeiro e de precificação sênior para varejo.
-    Analise os seguintes dados de precificação de um produto.
-    
-    IMPORTANTE: O cálculo utilizado é Markup sobre Custo. Ou seja, o lucro líquido calculado é exatamente a porcentagem definida sobre o custo total (Produto + Fixo).
-    As despesas (Impostos, Mkt, Taxas) são calculadas sobre o Preço de Venda Final.
+    Atue como um consultor financeiro e de precificação sênior.
+    Analise os dados de precificação abaixo.
+
+    ESTRUTURA DE CÁLCULO UTILIZADA:
+    1. Base: O markup de lucro incide EXCLUSIVAMENTE sobre o "Preço de Custo do Produto".
+    2. Despesas Fixas: O "Custo Fixo" é tratado como uma despesa monetária que deve ser coberta pelo preço, mas não gera lucro sobre ela.
+    3. Despesas Variáveis: Calculadas sobre o preço final de venda.
 
     DADOS DE ENTRADA:
-    - Preço de Custo: R$ ${inputs.costPrice.toFixed(2)}
-    - Custo Fixo Adicional (R$): R$ ${inputs.fixedCost.toFixed(2)}
-    - Margem de Lucro Desejada (sobre o Custo): ${inputs.desiredMargin}%
-    - Impostos (sobre Venda): ${inputs.taxRate}%
-    - Marketing/Comissões (sobre Venda): ${inputs.marketingCost}%
-    - Outras Taxas (sobre Venda): ${inputs.otherExpenses}%
+    - Preço de Custo (Produto): R$ ${inputs.costPrice.toFixed(2)}
+    - Margem de Lucro (sobre Custo do Produto): ${inputs.desiredMargin}%
+    - Custo Fixo (Despesa Operacional): R$ ${inputs.fixedCost.toFixed(2)}
+    
+    DESPESAS VARIÁVEIS (Sobre Venda):
+    - Impostos: ${inputs.taxRate}%
+    - Marketing: ${inputs.marketingCost}%
+    - Taxas/Outros: ${inputs.otherExpenses}%
 
-    RESULTADOS CALCULADOS:
-    - Preço de Venda Sugerido: R$ ${results.sellingPrice.toFixed(2)}
-    - Lucro Líquido Real (Valor): R$ ${results.grossProfit.toFixed(2)}
+    RESULTADOS:
+    - Preço de Venda Final: R$ ${results.sellingPrice.toFixed(2)}
+    - Lucro Líquido Real: R$ ${results.grossProfit.toFixed(2)}
 
     TAREFA:
-    1. Forneça uma análise breve (máximo 2 parágrafos) sobre a viabilidade desse preço. O preço parece competitivo ou o markup está gerando um preço final muito alto?
-    2. Liste 3 sugestões táticas curtas para otimizar a estratégia (ex: reduzir custos, ajustar markup, negociar taxas).
+    1. Analise se o preço final está competitivo dado o custo do produto. O peso das despesas fixas ou impostos está inflando demais o preço?
+    2. Liste 3 sugestões táticas para melhorar o resultado (ex: reduzir custo fixo, negociar taxas, alterar markup).
 
-    Responda em JSON seguindo este schema.
+    Responda em JSON.
   `;
 
   try {

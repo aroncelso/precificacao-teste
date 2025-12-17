@@ -2,20 +2,17 @@ import React, { useState, useMemo } from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 import { InputCard } from './components/InputCard';
 import { ResultCard } from './components/ResultCard';
-import { AIAdvisor } from './components/AIAdvisor';
 import { PricingInputs, PricingResults } from './types';
 
 // Initial State
 const initialInputs: PricingInputs = {
   costPrice: 100,
-  desiredMargin: 50, // Updated default to be more realistic for markup
+  desiredMargin: 100, // Example: 100% markup on product cost
   taxRate: 18,
   marketingCost: 5,
-  fixedCost: 0,
-  otherExpenses: 4.5, // e.g. card machine fees
+  fixedCost: 10,
+  otherExpenses: 4.5,
 };
-
-const COLORS = ['#22c55e', '#ef4444', '#f59e0b', '#3b82f6', '#64748b'];
 
 function App() {
   const [inputs, setInputs] = useState<PricingInputs>(initialInputs);
@@ -28,13 +25,19 @@ function App() {
   const results: PricingResults = useMemo(() => {
     const { costPrice, desiredMargin, taxRate, marketingCost, fixedCost, otherExpenses } = inputs;
     
-    // Formula Update: Markup on Cost
-    // SellingPrice = (Cost + FixedCost) * (1 + DesiredMarkup) / (1 - TotalPercentageExpenses)
+    // Formula Update based on user request:
+    // 1. Profit is calculated ONLY on the Product Cost (Markup).
+    // 2. Fixed Cost is an expense (additive), not part of the markup base.
+    // 3. Variable expenses are percentage of final price.
+    
+    // Math:
+    // Profit = CostPrice * MarkupRate
+    // RevenueNeeded = CostPrice + Profit + FixedCost
+    // SellingPrice = RevenueNeeded / (1 - VariableExpensesRate)
     
     const totalVariableRates = (taxRate + marketingCost + otherExpenses) / 100;
     const markupRate = desiredMargin / 100;
     
-    // Divisor is only affected by variable expenses now
     const divisor = 1 - totalVariableRates;
     
     if (divisor <= 0) {
@@ -48,29 +51,32 @@ function App() {
       };
     }
 
-    const totalBaseCost = costPrice + fixedCost;
-    const sellingPrice = (totalBaseCost * (1 + markupRate)) / divisor;
+    const targetProfit = costPrice * markupRate;
+    const numerator = costPrice + targetProfit + fixedCost;
     
-    // Verification values
+    const sellingPrice = numerator / divisor;
+    
+    // Breakdown values
     const taxValue = sellingPrice * (taxRate / 100);
     const marketingValue = sellingPrice * (marketingCost / 100);
     const otherValue = sellingPrice * (otherExpenses / 100);
     
-    // Profit value is mathematically: totalBaseCost * markupRate
-    // We calculate it deductively to ensure chart sums up perfectly
-    const profitValue = sellingPrice - totalBaseCost - taxValue - marketingValue - otherValue;
+    // Recalculate profit slightly from remaining to ensure exact chart sum (floating point safety)
+    // Theoretically equal to targetProfit
+    const actualProfit = sellingPrice - costPrice - fixedCost - taxValue - marketingValue - otherValue;
     
     const breakdown = [
-      { name: 'Lucro Líquido', value: profitValue, fill: '#22c55e' },
+      { name: 'Lucro (Markup)', value: actualProfit, fill: '#22c55e' },
       { name: 'Custo Produto', value: costPrice, fill: '#64748b' },
+      { name: 'Despesa Fixa', value: fixedCost, fill: '#8b5cf6' }, // Purple for fixed cost
       { name: 'Impostos', value: taxValue, fill: '#ef4444' },
       { name: 'Mkt/Comissões', value: marketingValue, fill: '#f59e0b' },
-      { name: 'Outras Taxas', value: otherValue + fixedCost, fill: '#3b82f6' },
+      { name: 'Outras Taxas', value: otherValue, fill: '#3b82f6' },
     ].filter(item => item.value > 0);
 
     return {
       sellingPrice,
-      grossProfit: profitValue,
+      grossProfit: actualProfit,
       totalPercentageCosts: totalVariableRates * 100,
       totalFixedCosts: fixedCost,
       isValid: true,
@@ -84,11 +90,11 @@ function App() {
       <header className="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Precifica.AI</h1>
-          <p className="text-slate-500 mt-1">Calculadora de Preço de Venda Baseada em Custos</p>
+          <p className="text-slate-500 mt-1">Calculadora de Preço de Venda</p>
         </div>
         <div className="text-right hidden md:block">
            <span className="inline-flex items-center rounded-full bg-brand-50 px-2.5 py-0.5 text-xs font-medium text-brand-700 ring-1 ring-inset ring-brand-600/20">
-            Fórmula: Markup sobre Custo
+            Margem sobre Custo do Produto
           </span>
         </div>
       </header>
@@ -99,8 +105,8 @@ function App() {
         <div className="lg:col-span-5 space-y-6">
           <section className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
             <h2 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-brand-600"><path d="M12 2v20"></path><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
-              Custos Base
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-brand-600"><path d="M20 12V8H6a2 2 0 0 1-2-2c0-1.1.9-2 2-2h12v4"></path><path d="M4 6v12c0 1.1.9 2 2 2h14v-4"></path><path d="M18 12a2 2 0 0 0-2 2c0 1.1.9 2 2 2h4v-4h-4z"></path></svg>
+              Produto (Base)
             </h2>
             <div className="grid gap-4">
               <InputCard
@@ -108,14 +114,7 @@ function App() {
                 value={inputs.costPrice}
                 onChange={(v) => handleInputChange('costPrice', v)}
                 prefix="R$"
-                tooltip="Quanto você paga ao fornecedor pelo produto."
-              />
-              <InputCard
-                label="Custo Fixo (Unitário)"
-                value={inputs.fixedCost}
-                onChange={(v) => handleInputChange('fixedCost', v)}
-                prefix="R$"
-                tooltip="Valor fixo em dinheiro a ser agregado ao custo (ex: frete unitário, embalagem)."
+                tooltip="Quanto você paga ao fornecedor pelo produto. O lucro será calculado sobre este valor."
               />
             </div>
           </section>
@@ -123,36 +122,48 @@ function App() {
           <section className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
             <h2 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-blue-500"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"></path><path d="M22 12A10 10 0 0 0 12 2v10z"></path></svg>
-              Variáveis e Lucro (%)
+              Despesas e Margem
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <InputCard
-                label="Margem de Lucro"
-                value={inputs.desiredMargin}
-                onChange={(v) => handleInputChange('desiredMargin', v)}
-                suffix="%"
-                tooltip="Porcentagem de lucro aplicada sobre o CUSTO do produto (Markup)."
-              />
+              <div className="sm:col-span-2">
+                <InputCard
+                  label="Margem de Lucro"
+                  value={inputs.desiredMargin}
+                  onChange={(v) => handleInputChange('desiredMargin', v)}
+                  suffix="%"
+                  tooltip="Porcentagem de lucro aplicada EXCLUSIVAMENTE sobre o Preço de Custo."
+                />
+              </div>
+              <div className="sm:col-span-2">
+                 <InputCard
+                  label="Custo Fixo (Despesa)"
+                  value={inputs.fixedCost}
+                  onChange={(v) => handleInputChange('fixedCost', v)}
+                  prefix="R$"
+                  tooltip="Valor monetário a ser coberto pelo preço (ex: Frete, Embalagem, Custo Operacional unitário)."
+                />
+              </div>
+             
               <InputCard
                 label="Impostos"
                 value={inputs.taxRate}
                 onChange={(v) => handleInputChange('taxRate', v)}
                 suffix="%"
-                tooltip="Impostos sobre a venda total (ex: Simples, ICMS)."
+                tooltip="Impostos sobre a venda total."
               />
               <InputCard
-                label="Marketing/Comissão"
+                label="Marketing/Ads"
                 value={inputs.marketingCost}
                 onChange={(v) => handleInputChange('marketingCost', v)}
                 suffix="%"
-                tooltip="Comissão de marketplace, vendedor ou ads (sobre a venda)."
+                tooltip="Custos variáveis de venda."
               />
               <InputCard
-                label="Taxas Cartão/Outros"
+                label="Taxas Cartão"
                 value={inputs.otherExpenses}
                 onChange={(v) => handleInputChange('otherExpenses', v)}
                 suffix="%"
-                tooltip="Taxas da maquininha ou outras porcentagens (sobre a venda)."
+                tooltip="Taxas financeiras sobre a venda."
               />
             </div>
           </section>
@@ -165,10 +176,7 @@ function App() {
           {!results.isValid ? (
              <div className="bg-red-50 border border-red-200 rounded-2xl p-8 text-center text-red-800">
                 <h3 className="text-xl font-bold mb-2">Impossível Calcular</h3>
-                <p>As despesas variáveis (Impostos + Marketing + Taxas) ultrapassam 100% do preço de venda.</p>
-                <div className="mt-4 font-mono bg-white inline-block px-4 py-2 rounded border border-red-100">
-                  Total Despesas: {(inputs.taxRate + inputs.marketingCost + inputs.otherExpenses).toFixed(2)}%
-                </div>
+                <p>As despesas variáveis (%) ultrapassam 100% do preço de venda.</p>
              </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -176,13 +184,13 @@ function App() {
                 label="Preço de Venda Sugerido"
                 value={results.sellingPrice}
                 highlight={true}
-                subValue="Garante margem livre de despesas"
+                subValue="Cobre Custo + Despesas + Lucro"
               />
               <ResultCard 
                 label="Lucro Líquido (R$)"
                 value={results.grossProfit}
                 isCurrency={true}
-                subValue={`Representa ${inputs.desiredMargin}% sobre o custo`}
+                subValue={`${inputs.desiredMargin}% sobre o Custo do Produto`}
               />
             </div>
           )}
@@ -190,7 +198,7 @@ function App() {
           {/* Chart Section */}
           {results.isValid && (
             <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 h-[400px] flex flex-col">
-              <h3 className="text-sm font-bold text-slate-500 uppercase tracking-wide mb-4">Composição do Preço Final</h3>
+              <h3 className="text-sm font-bold text-slate-500 uppercase tracking-wide mb-4">Destino do Faturamento</h3>
               <div className="flex-1 w-full min-h-0">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
@@ -217,10 +225,6 @@ function App() {
               </div>
             </div>
           )}
-
-          {/* AI Section */}
-          <AIAdvisor inputs={inputs} results={results} />
-
         </div>
       </main>
     </div>

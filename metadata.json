@@ -1,5 +1,5 @@
 {
   "name": "Precifica.AI",
-  "description": "Calculadora inteligente de preço de venda com base em custos, margem e despesas, com análise de IA.",
+  "description": "Calculadora de preço de venda com base em custos, margem e despesas.",
   "requestFramePermissions": []
 }
